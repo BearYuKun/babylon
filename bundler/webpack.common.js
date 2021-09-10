@@ -4,8 +4,9 @@
  * @Author: XYK
  * @Date: 2021-09-09 14:38:57
  * @LastEditors: XYK
- * @LastEditTime: 2021-09-09 14:41:19
+ * @LastEditTime: 2021-09-09 15:35:13
  */
+
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCSSExtractPlugin = require('mini-css-extract-plugin')
@@ -23,7 +24,7 @@ module.exports = {
     [
         new CopyWebpackPlugin({
             patterns: [
-                { from: path.resolve(__dirname, '../resources') }
+                { from: path.resolve(__dirname, '../static') }
             ]
         }),
         new HtmlWebpackPlugin({
@@ -71,7 +72,8 @@ module.exports = {
                         loader: 'file-loader',
                         options:
                         {
-                            outputPath: 'assets/images/'
+                            outputPath: 'assets/images/',
+                            limit: 8*1024
                         }
                     }
                 ]
