@@ -30,27 +30,6 @@ async function init () {
   light = new BABYLON.HemisphericLight(new BABYLON.Vector3(1, 1, 0))
   // 场景
   initField()
-  // 形状
-  const cube = BABYLON.MeshBuilder.CreateBox('box1', { size: 1000 })
-  cube.material = createMaterial()
-  cube.position = new BABYLON.Vector3(1100, 500, 0)
-  const ball = BABYLON.MeshBuilder.CreateSphere('ball1', { segments: 20, diameter: 1000 })
-  ball.material = createMaterial()
-  ball.position = new BABYLON.Vector3(-1000, 500, 0)
-  const merge = BABYLON.Mesh.MergeMeshes([cube, ball])
-
-  // 增加高亮渲染层.
-  hl = new BABYLON.HighlightLayer('hl1', scene)
-
-  // 模型
-  // model = await importModel('./models/sazabi_ver.ka/')
-  // const meshes = model.meshes
-  // // 初始化GUI
-  // initGUI()
-  // meshes.filter(mesh => mesh.material).forEach(mesh => {
-  //   mesh.isPickable = true
-  //   setMeshActions(mesh)
-  // })
 
   engine.runRenderLoop(function () {
     scene.render()
@@ -59,7 +38,19 @@ async function init () {
   window.addEventListener('resize', function () {
     engine.resize()
   })
-  getPermission()
+
+  // 增加高亮渲染层.
+  hl = new BABYLON.HighlightLayer('hl1', scene)
+
+  // 模型
+  model = await importModel('./models/sazabi_ver.ka/')
+  const meshes = model.meshes
+  // 初始化GUI
+  initGUI()
+  meshes.filter(mesh => mesh.material).forEach(mesh => {
+    mesh.isPickable = true
+    setMeshActions(mesh)
+  })
 }
 
 // 绘制环境
@@ -166,7 +157,7 @@ function initGUI () {
 // 创建材质
 function createMaterial () {
   const material = new BABYLON.StandardMaterial()
-  material.diffuseTexture = new BABYLON.Texture('/texture/crate.jpg')
+  material.diffuseTexture = new BABYLON.Texture('./texture/crate.jpg')
   return material
 }
 // 切换材质
