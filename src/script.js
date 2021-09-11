@@ -10,7 +10,7 @@ import * as BABYLON from 'babylonjs'
 import 'babylonjs-loaders'
 import * as GUI from 'babylonjs-gui'
 
-let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, panel
+let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, hlPicked, panel
 const clientHeight = document.body.clientHeight// 网页可见区域宽
 const clientWidth = document.body.clientWidth// 网页可见区域宽
 init()
@@ -41,9 +41,11 @@ async function init () {
 
   // 增加高亮渲染层.
   hl = new BABYLON.HighlightLayer('hl1', scene)
-
+  hlPicked = new BABYLON.HighlightLayer('hl2', scene)
+  engine.displayLoadingUI()
   // 模型
   model = await importModel('./models/sazabi_ver.ka/')
+  engine.hideLoadingUI()
   const meshes = model.meshes
   // 初始化GUI
   initGUI()
@@ -91,8 +93,8 @@ function setMeshActions (mesh) {
       },
       function (e) {
         const dpic = scene.pick(scene.pointerX, scene.pointerY)
-        hl.removeAllMeshes() // 清除其他高亮
-        hl.addMesh(dpic.pickedMesh, BABYLON.Color3.Green())
+        // hl.removeAllMeshes() // 清除其他高亮
+        // hl.addMesh(dpic.pickedMesh, BABYLON.Color3.Green())
       }
     )
   )
@@ -106,7 +108,8 @@ function setMeshActions (mesh) {
         pickedMesh = dpic.pickedMesh
         picker.text = pickedMesh.name
         picker.value = pickedMesh.material && (pickedMesh.material.albedoColor || pickedMesh.material.diffuseColor)
-        hl.removeAllMeshes()
+        hlPicked.removeAllMeshes()
+        hlPicked.addMesh(pickedMesh, BABYLON.Color3.Green())
       }
     )
   )
@@ -139,7 +142,7 @@ function initGUI () {
   advancedTexture.addControl(panel)
   // 文本框
   const textBlock = new GUI.TextBlock()
-  textBlock.text = 'Diffuse color:'
+  textBlock.text = ''
   textBlock.height = '30px'
   panel.addControl(textBlock)
   // 颜色选择器
@@ -147,8 +150,8 @@ function initGUI () {
   picker.height = '150px'
   picker.width = '150px'
   picker.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  picker.onValueChangedObservable.add(function (value) { // value is a color3
-    // console.log(pickedMesh.material)
+  picker.onValueChangedObservable.add(function (value) {
+    hlPicked.removeAllMeshes()
     if (!pickedMesh) return
     if (pickedMesh.material.albedoColor) { pickedMesh.material.albedoColor.copyFrom(value) } else { pickedMesh.material.diffuseColor.copyFrom(value) }
   })
