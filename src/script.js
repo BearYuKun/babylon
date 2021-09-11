@@ -31,19 +31,19 @@ async function init () {
   // 场景
   initField()
   // 形状
-  // const cube = BABYLON.MeshBuilder.CreateBox('box1', { size: 1000 })
-  // cube.material = createMaterial()
-  // cube.position = new BABYLON.Vector3(1100, 500, 0)
-  // const ball = BABYLON.MeshBuilder.CreateSphere('ball1', { segments: 20, diameter: 1000 })
-  // ball.material = createMaterial()
-  // ball.position = new BABYLON.Vector3(-1000, 500, 0)
-  // const merge = BABYLON.Mesh.MergeMeshes([cube, ball])
+  const cube = BABYLON.MeshBuilder.CreateBox('box1', { size: 1000 })
+  cube.material = createMaterial()
+  cube.position = new BABYLON.Vector3(1100, 500, 0)
+  const ball = BABYLON.MeshBuilder.CreateSphere('ball1', { segments: 20, diameter: 1000 })
+  ball.material = createMaterial()
+  ball.position = new BABYLON.Vector3(-1000, 500, 0)
+  const merge = BABYLON.Mesh.MergeMeshes([cube, ball])
 
   // 增加高亮渲染层.
   hl = new BABYLON.HighlightLayer('hl1', scene)
 
   // 模型
-  model = await importModel('/models/sazabi_ver.ka/')
+  model = await importModel('./models/sazabi_ver.ka/')
   const meshes = model.meshes
   // 初始化GUI
   initGUI()
@@ -59,6 +59,7 @@ async function init () {
   window.addEventListener('resize', function () {
     engine.resize()
   })
+  getPermission()
 }
 
 // 绘制环境
@@ -124,7 +125,6 @@ function initGUI () {
   const gui1 = GUI.AdvancedDynamicTexture.CreateFullscreenUI('myUI')
   const button = GUI.Button.CreateSimpleButton('button', '调色盘')
   button.top = -clientHeight / 2 + 60 + 'px'
-  console.log(clientHeight)
   button.left = clientWidth / 2 - 100 + 'px'
   button.width = '150px'
   button.height = '50px'
@@ -173,8 +173,13 @@ function createMaterial () {
 function changeMaterial (material) {
   pickedMesh.material = material
 }
-// 陀螺仪监听
 
+function getPermission () {
+  console.log(window.DeviceOrientationEvent)
+  window.addEventListener('deviceorientation', captureOrientation)
+}
+
+// 陀螺仪监听
 function captureOrientation (event) {
   const alpha = event.alpha
   const beta = event.beta
