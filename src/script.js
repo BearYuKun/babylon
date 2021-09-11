@@ -43,14 +43,14 @@ async function init () {
   hl = new BABYLON.HighlightLayer('hl1', scene)
 
   // 模型
-  model = await importModel('./models/sazabi_ver.ka/')
-  const meshes = model.meshes
-  // 初始化GUI
-  initGUI()
-  meshes.filter(mesh => mesh.material).forEach(mesh => {
-    mesh.isPickable = true
-    setMeshActions(mesh)
-  })
+  // model = await importModel('./models/sazabi_ver.ka/')
+  // const meshes = model.meshes
+  // // 初始化GUI
+  // initGUI()
+  // meshes.filter(mesh => mesh.material).forEach(mesh => {
+  //   mesh.isPickable = true
+  //   setMeshActions(mesh)
+  // })
 
   engine.runRenderLoop(function () {
     scene.render()
