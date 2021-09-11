@@ -18,6 +18,7 @@ init()
 async function init () {
   canvas = document.querySelector('#renderCanvas')
   engine = new BABYLON.Engine(canvas, true, { stencil: true })
+  console.log(engine)
   scene = new BABYLON.Scene(engine)
   // 相机
   camera = new BABYLON.ArcRotateCamera('Camera', Math.PI / 2, Math.PI / 2, 2000, new BABYLON.Vector3(0, 500, 0))
@@ -42,6 +43,7 @@ async function init () {
   // 增加高亮渲染层.
   hl = new BABYLON.HighlightLayer('hl1', scene)
   hlPicked = new BABYLON.HighlightLayer('hl2', scene)
+  engine.loadingUIText = '加载模型数据中，初次加载时间可能较长'
   engine.displayLoadingUI()
   // 模型
   model = await importModel('./models/sazabi_ver.ka/')
