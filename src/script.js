@@ -4,7 +4,7 @@
     * @Author: XYK
     * @Date: 2021-09-09 14:42:56
  * @LastEditors: XYK
- * @LastEditTime: 2021-09-10 17:44:50
+ * @LastEditTime: 2021-09-16 16:21:11
     */
 import * as BABYLON from 'babylonjs'
 import 'babylonjs-loaders'
@@ -23,11 +23,11 @@ async function init () {
   camera = new BABYLON.ArcRotateCamera('Camera', Math.PI / 2, Math.PI / 2, 2000, new BABYLON.Vector3(0, 500, 0))
   camera.wheelDeltaPercentage = 0.01 // 滚轮速度
   camera.attachControl(canvas, true)
-  camera.zoomToMouseLocation = true
   camera.useAutoRotationBehavior = true // 自旋转
   camera.upperBetaLimit = Math.PI / 2.2 // 限制旋转
   // 光照
-  light = new BABYLON.HemisphericLight(new BABYLON.Vector3(1, 1, 0))
+  // light = new BABYLON.HemisphericLight(new BABYLON.Vector3(1, 1, 0))
+  light = new BABYLON.PointLight('light', new BABYLON.Vector3(0, 1, 0), scene)
   // 场景
   initField()
   // 形状
@@ -50,6 +50,7 @@ async function init () {
   meshes.filter(mesh => mesh.material).forEach(mesh => {
     mesh.isPickable = true
     setMeshActions(mesh)
+    mesh.material = changeMaterial(mesh.material)
   })
 
   engine.runRenderLoop(function () {
@@ -71,10 +72,11 @@ function initField () {
 
 // 天空盒
 function initSkyBox () {
-  const skybox = BABYLON.MeshBuilder.CreateBox('skyBox', { size: 3500 }, scene)
+  // Skybox
+  const skybox = BABYLON.MeshBuilder.CreateBox('skyBox', { size: 10000.0 }, scene)
   const skyboxMaterial = new BABYLON.StandardMaterial('skyBox', scene)
   skyboxMaterial.backFaceCulling = false
-  skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture('/texture/crate.png', scene)
+  skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture('/textures/crate.jpg', scene)
   skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE
   skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0)
   skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0)
@@ -148,7 +150,7 @@ function initGUI () {
   advancedTexture.addControl(panel)
   // 文本框
   const textBlock = new GUI.TextBlock()
-  textBlock.text = 'Diffuse color:'
+  // textBlock.text = 'Diffuse color:'
   textBlock.height = '30px'
   panel.addControl(textBlock)
   // 颜色选择器
@@ -166,12 +168,14 @@ function initGUI () {
 // 创建材质
 function createMaterial () {
   const material = new BABYLON.StandardMaterial()
-  material.diffuseTexture = new BABYLON.Texture('/texture/crate.jpg')
+  // material.diffuseTexture = new BABYLON.Texture('/texture/crate.jpg')
   return material
 }
 // 切换材质
-function changeMaterial (material) {
-  pickedMesh.material = material
+function changeMaterial (materialO) {
+  const material = createMaterial()
+  material.diffuseColor = materialO.albedoColor || materialO.diffuseColor
+  return material
 }
 // 陀螺仪监听
 
