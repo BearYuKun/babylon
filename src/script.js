@@ -4,13 +4,13 @@
     * @Author: XYK
     * @Date: 2021-09-09 14:42:56
  * @LastEditors: XYK
- * @LastEditTime: 2021-09-16 16:21:11
+ * @LastEditTime: 2021-09-16 16:22:38
     */
 import * as BABYLON from 'babylonjs'
 import 'babylonjs-loaders'
 import * as GUI from 'babylonjs-gui'
 
-let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, panel
+let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, hlPicked, panel
 const clientHeight = document.body.clientHeight// 网页可见区域宽
 const clientWidth = document.body.clientWidth// 网页可见区域宽
 init()
@@ -18,6 +18,7 @@ init()
 async function init () {
   canvas = document.querySelector('#renderCanvas')
   engine = new BABYLON.Engine(canvas, true, { stencil: true })
+  console.log(engine)
   scene = new BABYLON.Scene(engine)
   // 相机
   camera = new BABYLON.ArcRotateCamera('Camera', Math.PI / 2, Math.PI / 2, 2000, new BABYLON.Vector3(0, 500, 0))
@@ -30,28 +31,6 @@ async function init () {
   light = new BABYLON.PointLight('light', new BABYLON.Vector3(0, 1, 0), scene)
   // 场景
   initField()
-  // 形状
-  // const cube = BABYLON.MeshBuilder.CreateBox('box1', { size: 1000 })
-  // cube.material = createMaterial()
-  // cube.position = new BABYLON.Vector3(1100, 500, 0)
-  // const ball = BABYLON.MeshBuilder.CreateSphere('ball1', { segments: 20, diameter: 1000 })
-  // ball.material = createMaterial()
-  // ball.position = new BABYLON.Vector3(-1000, 500, 0)
-  // const merge = BABYLON.Mesh.MergeMeshes([cube, ball])
-
-  // 增加高亮渲染层.
-  hl = new BABYLON.HighlightLayer('hl1', scene)
-
-  // 模型
-  model = await importModel('/models/sazabi_ver.ka/')
-  const meshes = model.meshes
-  // 初始化GUI
-  initGUI()
-  meshes.filter(mesh => mesh.material).forEach(mesh => {
-    mesh.isPickable = true
-    setMeshActions(mesh)
-    mesh.material = changeMaterial(mesh.material)
-  })
 
   engine.runRenderLoop(function () {
     scene.render()
@@ -59,6 +38,23 @@ async function init () {
   // 监听浏览器resize事件
   window.addEventListener('resize', function () {
     engine.resize()
+  })
+
+  // 增加高亮渲染层.
+  hl = new BABYLON.HighlightLayer('hl1', scene)
+  hlPicked = new BABYLON.HighlightLayer('hl2', scene)
+  engine.loadingUIText = '加载模型数据中，初次加载时间可能较长'
+  engine.displayLoadingUI()
+  // 模型
+  model = await importModel('./models/sazabi_ver.ka/')
+  engine.hideLoadingUI()
+  const meshes = model.meshes
+  // 初始化GUI
+  initGUI()
+  meshes.filter(mesh => mesh.material).forEach(mesh => {
+    mesh.isPickable = true
+    setMeshActions(mesh)
+    mesh.material = changeMaterial(mesh.material)
   })
 }
 
@@ -101,8 +97,8 @@ function setMeshActions (mesh) {
       },
       function (e) {
         const dpic = scene.pick(scene.pointerX, scene.pointerY)
-        hl.removeAllMeshes() // 清除其他高亮
-        hl.addMesh(dpic.pickedMesh, BABYLON.Color3.Green())
+        // hl.removeAllMeshes() // 清除其他高亮
+        // hl.addMesh(dpic.pickedMesh, BABYLON.Color3.Green())
       }
     )
   )
@@ -116,7 +112,8 @@ function setMeshActions (mesh) {
         pickedMesh = dpic.pickedMesh
         picker.text = pickedMesh.name
         picker.value = pickedMesh.material && (pickedMesh.material.albedoColor || pickedMesh.material.diffuseColor)
-        hl.removeAllMeshes()
+        hlPicked.removeAllMeshes()
+        hlPicked.addMesh(pickedMesh, BABYLON.Color3.Green())
       }
     )
   )
@@ -126,7 +123,6 @@ function initGUI () {
   const gui1 = GUI.AdvancedDynamicTexture.CreateFullscreenUI('myUI')
   const button = GUI.Button.CreateSimpleButton('button', '调色盘')
   button.top = -clientHeight / 2 + 60 + 'px'
-  console.log(clientHeight)
   button.left = clientWidth / 2 - 100 + 'px'
   button.width = '150px'
   button.height = '50px'
@@ -150,7 +146,7 @@ function initGUI () {
   advancedTexture.addControl(panel)
   // 文本框
   const textBlock = new GUI.TextBlock()
-  // textBlock.text = 'Diffuse color:'
+  textBlock.text = ''
   textBlock.height = '30px'
   panel.addControl(textBlock)
   // 颜色选择器
@@ -158,8 +154,8 @@ function initGUI () {
   picker.height = '150px'
   picker.width = '150px'
   picker.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_CENTER
-  picker.onValueChangedObservable.add(function (value) { // value is a color3
-    // console.log(pickedMesh.material)
+  picker.onValueChangedObservable.add(function (value) {
+    hlPicked.removeAllMeshes()
     if (!pickedMesh) return
     if (pickedMesh.material.albedoColor) { pickedMesh.material.albedoColor.copyFrom(value) } else { pickedMesh.material.diffuseColor.copyFrom(value) }
   })
@@ -177,8 +173,13 @@ function changeMaterial (materialO) {
   material.diffuseColor = materialO.albedoColor || materialO.diffuseColor
   return material
 }
-// 陀螺仪监听
 
+function getPermission () {
+  console.log(window.DeviceOrientationEvent)
+  window.addEventListener('deviceorientation', captureOrientation)
+}
+
+// 陀螺仪监听
 function captureOrientation (event) {
   const alpha = event.alpha
   const beta = event.beta
