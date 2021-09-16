@@ -4,15 +4,19 @@
     * @Author: XYK
     * @Date: 2021-09-09 14:42:56
  * @LastEditors: XYK
- * @LastEditTime: 2021-09-16 16:22:38
+ * @LastEditTime: 2021-09-16 18:04:10
     */
 import * as BABYLON from 'babylonjs'
 import 'babylonjs-loaders'
 import * as GUI from 'babylonjs-gui'
+import * as dat from 'dat.gui'
 
-let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, hlPicked, panel
-const clientHeight = document.body.clientHeight// 网页可见区域宽
-const clientWidth = document.body.clientWidth// 网页可见区域宽
+let canvas, engine, scene, camera, light, pickedMesh, picker, model, hl, hlPicked, panel, meshes, combined, hemiLight
+const options = {
+  light: 'hemi',
+  material: 'default',
+  showColorPalette: false
+}
 init()
 
 async function init () {
@@ -27,8 +31,9 @@ async function init () {
   camera.useAutoRotationBehavior = true // 自旋转
   camera.upperBetaLimit = Math.PI / 2.2 // 限制旋转
   // 光照
-  // light = new BABYLON.HemisphericLight(new BABYLON.Vector3(1, 1, 0))
-  light = new BABYLON.PointLight('light', new BABYLON.Vector3(0, 1, 0), scene)
+  // light = new BABYLON.PointLight('light', new BABYLON.Vector3(1280, 1750, 411), scene)
+  hemiLight = new BABYLON.HemisphericLight('hemiLight', new BABYLON.Vector3(1, 1, 0))
+
   // 场景
   initField()
 
@@ -48,13 +53,14 @@ async function init () {
   // 模型
   model = await importModel('./models/sazabi_ver.ka/')
   engine.hideLoadingUI()
-  const meshes = model.meshes
+  meshes = model.meshes
+  combined = BABYLON.Mesh.MergeMeshes(meshes)
+  console.log(combined, meshes, model)
   // 初始化GUI
   initGUI()
   meshes.filter(mesh => mesh.material).forEach(mesh => {
     mesh.isPickable = true
     setMeshActions(mesh)
-    mesh.material = changeMaterial(mesh.material)
   })
 }
 
@@ -62,7 +68,11 @@ async function init () {
 function initField () {
   const ground = BABYLON.MeshBuilder.CreateGround('ground', { width: 1000, height: 1000 })
   ground.position = new BABYLON.Vector3(0, -80, 0)
-  ground.material = createMaterial()
+  ground.material = new BABYLON.StandardMaterial()
+  ground.material.diffuseColor = new BABYLON.Color3(0, 0, 0)
+  const material = new BABYLON.StandardMaterial()
+  material.diffuseTexture = new BABYLON.Texture('/texture/crate.jpg')
+  ground.material = material
   // initSkyBox()
 }
 
@@ -120,25 +130,24 @@ function setMeshActions (mesh) {
 }
 // 初始化GUI
 function initGUI () {
-  const gui1 = GUI.AdvancedDynamicTexture.CreateFullscreenUI('myUI')
-  const button = GUI.Button.CreateSimpleButton('button', '调色盘')
-  button.top = -clientHeight / 2 + 60 + 'px'
-  button.left = clientWidth / 2 - 100 + 'px'
-  button.width = '150px'
-  button.height = '50px'
-  button.cornerRadius = 20
-  button.thickness = 4
-  button.children[0].color = '#DFF9FB'
-  button.children[0].fontSize = 24
-  button.color = '#FF7979'
-  button.background = '#EB4D4B'
-  button.onPointerClickObservable.add(async function () {
-    panel.isVisible = !panel.isVisible
+  const gui = new dat.GUI()
+  const lightFolder = gui.addFolder('光源')
+  // lightFolder.add(light.position, 'x', -1750, 1750, 1)
+  // lightFolder.add(light.position, 'y', -1750, 1750, 1)
+  // lightFolder.add(light.position, 'z', -1750, 1750, 1)
+  const optionsFolder = gui.addFolder('设置')
+  const lightController = optionsFolder.add(options, 'light', { 环境光: 'hemi', 点光源: 'point' }).name('光源')
+  lightController.onChange(value => {
+    console.log(scene)
+    scene.lights.pop()
   })
-  gui1.addControl(button)
+  const materialController = optionsFolder.add(options, 'material', { 消光: 'default', 珠光: 'standard' }).name('材质')
+  materialController.onChange((value) => { changeMaterial() })
+
   const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI', true, scene)
   panel = new GUI.StackPanel()
   panel.isVisible = false
+  optionsFolder.add(panel, 'isVisible').name('调色盘')
   panel.width = '200px'
   panel.isVertical = true
   panel.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT
@@ -169,9 +178,12 @@ function createMaterial () {
 }
 // 切换材质
 function changeMaterial (materialO) {
-  const material = createMaterial()
-  material.diffuseColor = materialO.albedoColor || materialO.diffuseColor
-  return material
+  meshes.filter(mesh => mesh.material).forEach(mesh => {
+    const material = createMaterial()
+    mesh.isPickable = true
+    material.diffuseColor = mesh.material.albedoColor || mesh.materialO.diffuseColor
+    mesh.material = material
+  })
 }
 
 function getPermission () {
